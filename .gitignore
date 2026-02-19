@@ -1,0 +1,6 @@
+start.sh.backup
+*.pyc
+__pycache__/
+.DS_Store
+.env
+analysis_results.json
