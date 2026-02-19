@@ -33,7 +33,13 @@ from analyzer import (
     analyze_defense_mechanisms,
     analyze_kpis,
     qualitative_summary,
+    DSM5_AVAILABLE,
 )
+
+# Import DSM-5 diagnostic function if available
+if DSM5_AVAILABLE:
+    from dsm5_diagnostic import analyze_dsm5_diagnosis
+
 
 # ════════════════════════════════════════════════════════════════
 #  FASTAPI APP SETUP
@@ -307,6 +313,18 @@ def run_full_analysis(data: dict) -> dict:
             kpi_data     = analyze_kpis(conversation_text, participant_label)
             summary_data = qualitative_summary(conversation_text, participant_label)
             
+            # ── Run DSM-5 diagnostic analysis if available ─────────────────────────
+            dsm5_data = None
+            if DSM5_AVAILABLE:
+                try:
+                    dsm5_data = analyze_dsm5_diagnosis(
+                        conversation_text, 
+                        participant_label
+                    )
+                except Exception as dsm_error:
+                    print(f"DSM-5 analysis failed for {participant_label}: {dsm_error}")
+                    dsm5_data = {"error": str(dsm_error)}
+            
             # COMPATIBILITY LAYER: Convert new two-sided format to old one-sided format
             # This allows the current dashboard to still work while we update it
             old_format_defense = {
@@ -342,6 +360,14 @@ def run_full_analysis(data: dict) -> dict:
                     "defense": defense_data,
                     "kpis": kpi_data,
                     "summary": summary_data
+                },
+                # Add DSM-5 diagnostic assessment
+                "dsm5_diagnosis": dsm5_data if dsm5_data else {
+                    "primary_diagnosis": {
+                        "disorder": "DSM-5 Analysis Not Available",
+                        "confidence": "Insufficient Evidence",
+                        "clinical_notes": "DSM-5 diagnostic module not loaded"
+                    }
                 }
             }
         

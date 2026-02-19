@@ -416,6 +416,201 @@
 
   .fade-in { animation: fadeIn 0.4s ease forwards; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* DSM-5 Diagnostic Assessment Styles - Add these to your dashboard.html <style> section */
+
+/* Diagnostic disclaimer banner */
+.diagnostic-disclaimer {
+  background: rgba(240, 164, 79, 0.1);
+  border: 1px solid var(--warn);
+  border-left: 3px solid var(--warn);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  font-size: 12px;
+  color: var(--warn);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Primary diagnosis card */
+.primary-diagnosis-card {
+  background: var(--surface);
+  border: 2px solid var(--accent3);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.primary-diagnosis-card h3 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  margin-bottom: 12px;
+  color: var(--accent3);
+}
+
+.confidence-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.confidence-badge.high { 
+  background: rgba(200,240,79,0.2); 
+  color: var(--accent); 
+  border: 1px solid var(--accent);
+}
+.confidence-badge.moderate { 
+  background: rgba(240,164,79,0.2); 
+  color: var(--warn); 
+  border: 1px solid var(--warn);
+}
+.confidence-badge.low { 
+  background: rgba(240,79,138,0.2); 
+  color: var(--accent2); 
+  border: 1px solid var(--accent2);
+}
+.confidence-badge.very.low { 
+  background: rgba(107,114,128,0.2); 
+  color: var(--muted); 
+  border: 1px solid var(--muted);
+}
+
+.dsm-reference {
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--surface2);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  border-left: 3px solid var(--accent3);
+}
+
+/* Criteria table */
+.criteria-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 24px;
+  background: var(--surface);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.criteria-table th {
+  background: var(--surface2);
+  padding: 12px;
+  text-align: left;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.criteria-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.criteria-table tr:last-child td {
+  border-bottom: none;
+}
+
+.criteria-table tr.met {
+  background: rgba(200,240,79,0.05);
+}
+
+.criteria-table tr.met td:first-child {
+  border-left: 3px solid var(--accent);
+}
+
+.criteria-table tr.not-met {
+  opacity: 0.5;
+}
+
+.criteria-table tr.not-met td:first-child {
+  border-left: 3px solid transparent;
+}
+
+.evidence-item {
+  background: var(--surface2);
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent3);
+  margin: 6px 0;
+  border-radius: 4px;
+}
+
+.message-quote {
+  font-style: italic;
+  color: var(--text);
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.indicator-match {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-icon {
+  font-size: 18px;
+  text-align: center;
+}
+
+/* All assessments summary */
+.all-assessments {
+  margin-top: 32px;
+}
+
+.assessment-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  transition: border-color 0.2s;
+}
+
+.assessment-summary:hover {
+  border-color: var(--accent3);
+}
+
+.assessment-summary .disorder-name {
+  font-weight: 500;
+  flex: 1;
+}
+
+.assessment-summary .criteria-count {
+  color: var(--muted);
+  font-size: 11px;
+  margin: 0 16px;
+}
+
+.assessment-summary .percentage {
+  font-family: 'DM Serif Display', serif;
+  font-size: 16px;
+  margin: 0 16px;
+}
+
+.no-diagnosis {
+  text-align: center;
+  padding: 40px;
+  color: var(--muted);
+  background: var(--surface);
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+}
+
 </style>
 </head>
 <body>
@@ -773,6 +968,7 @@ function renderBothSides(conv, participantName) {
     html += `<div class="tag-list">${summary.therapy_suggestions.map(t => `<span class="tag tag-warn">${t}</span>`).join('')}</div>`;
   }
 
+  html += renderDSM5Diagnosis(conv);
   return html;
 }
 
@@ -781,6 +977,116 @@ function renderOneSide(conv) {
   let html = '<div class="empty-state"><div class="big">Old Format Detected</div><p>This analysis was done with the old one-sided analyzer. Re-upload to get both sides analysis.</p></div>';
   return html;
 }
+
+// DSM-5 Rendering Function - Add this to your dashboard.html JavaScript section
+
+function renderDSM5Diagnosis(conv) {
+  if (!conv.dsm5_diagnosis) return '';
+  
+  const dsm5 = conv.dsm5_diagnosis;
+  let html = '<div class="section-title" style="margin-top:48px">DSM-5 Diagnostic Assessment</div>';
+  
+  // Disclaimer banner
+  html += `<div class="diagnostic-disclaimer">
+    <span style="font-size:18px">⚠️</span>
+    <div>${dsm5.disclaimer}</div>
+  </div>`;
+  
+  // Primary Diagnosis Card
+  if (dsm5.primary_diagnosis && dsm5.primary_diagnosis.meets_diagnostic_threshold) {
+    const pd = dsm5.primary_diagnosis;
+    html += `<div class="primary-diagnosis-card">
+      <h3>Primary Indication: ${pd.disorder_name}</h3>
+      <div class="confidence-badge ${pd.confidence_level.toLowerCase().replace(' ', '.')}">${pd.confidence_level} Confidence</div>
+      <p style="line-height:1.6;margin-bottom:12px">${pd.clinical_interpretation}</p>
+      <div class="dsm-reference">
+        📖 <strong>DSM-5 Reference:</strong> Page ${pd.dsm5_page} (PDF page ${pd.pdf_page})<br>
+        <strong>Section:</strong> ${pd.section}<br>
+        <strong>Criteria Met:</strong> ${pd.criteria_met}/${pd.total_criteria} required (${pd.criteria_met_percentage}%)
+        ${pd.duration_note !== 'Not specified' ? `<br><strong>Duration:</strong> ${pd.duration_note}` : ''}
+      </div>
+    </div>`;
+    
+    // Criteria Breakdown Table
+    html += `<h4 style="font-size:14px;margin-bottom:16px;color:var(--accent3)">Diagnostic Criteria Breakdown</h4>`;
+    html += `<table class="criteria-table">
+      <thead>
+        <tr>
+          <th style="width:50%">Criterion</th>
+          <th style="width:60px;text-align:center">Status</th>
+          <th>Evidence from Conversation</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    
+    for (const [id, criterion] of Object.entries(pd.criteria_breakdown)) {
+      const status = criterion.is_met ? '✓' : '✗';
+      const statusColor = criterion.is_met ? 'var(--accent)' : 'var(--muted)';
+      const rowClass = criterion.is_met ? 'met' : 'not-met';
+      
+      html += `<tr class="${rowClass}">
+        <td>
+          <div style="font-weight:500;margin-bottom:4px;font-size:11px;color:var(--accent3)">${id}</div>
+          <div style="line-height:1.5">${criterion.criterion_text}</div>
+        </td>
+        <td class="status-icon" style="color:${statusColor}">${status}</td>
+        <td>`;
+      
+      if (criterion.evidence && criterion.evidence.length > 0) {
+        for (const ev of criterion.evidence) {
+          html += `<div class="evidence-item">
+            <div class="message-quote">"${ev.message}"</div>
+            <div class="indicator-match">Matches indicator: ${ev.indicator_matched}</div>
+          </div>`;
+        }
+        if (criterion.evidence_count > criterion.evidence.length) {
+          html += `<div style="color:var(--muted);font-size:11px;margin-top:8px">
+            +${criterion.evidence_count - criterion.evidence.length} more occurrence(s)
+          </div>`;
+        }
+      } else {
+        html += '<span style="color:var(--muted);font-size:11px">No evidence found in conversation</span>';
+      }
+      
+      html += '</td></tr>';
+    }
+    
+    html += '</tbody></table>';
+  } else {
+    // No primary diagnosis - show summary
+    html += `<div class="no-diagnosis">
+      <div style="font-size:18px;margin-bottom:8px">No Diagnostic Criteria Met</div>
+      <p>Based on the conversation analyzed, no disorders met the diagnostic threshold.</p>
+      <p style="margin-top:8px;font-size:11px">This does not rule out mental health concerns. Clinical evaluation recommended if symptoms are present.</p>
+    </div>`;
+  }
+  
+  // All Assessments Summary
+  if (dsm5.all_assessments && dsm5.all_assessments.length > 0) {
+    html += '<h4 style="font-size:14px;margin-top:32px;margin-bottom:16px;color:var(--muted)">All Disorders Assessed:</h4>';
+    html += '<div class="all-assessments">';
+    
+    for (const assessment of dsm5.all_assessments) {
+      const badgeClass = assessment.confidence_level.toLowerCase().replace(' ', '.');
+      html += `<div class="assessment-summary">
+        <span class="disorder-name">${assessment.disorder_name}</span>
+        <span class="criteria-count">${assessment.criteria_met}/${assessment.total_criteria} criteria</span>
+        <span class="percentage">${assessment.criteria_met_percentage}%</span>
+        <span class="confidence-badge ${badgeClass}">${assessment.confidence_level}</span>
+      </div>`;
+    }
+    
+    html += '</div>';
+  }
+  
+  return html;
+}
+
+// IMPORTANT: Add this call to the renderBothSides function
+// Find the line that says: return html;
+// RIGHT BEFORE that line, add:
+// html += renderDSM5Diagnosis(conv);
+
 </script>
 </body>
 </html>

@@ -19,6 +19,15 @@ import glob
 from collections import defaultdict
 from anthropic import Anthropic
 
+# ── Import DSM-5 diagnostic module ──────────────────────────────────────────
+try:
+    from dsm5_diagnostic import analyze_dsm5_diagnosis
+    DSM5_AVAILABLE = True
+    print("✓ DSM-5 diagnostic module loaded")
+except ImportError:
+    DSM5_AVAILABLE = False
+    print("⚠ Warning: DSM-5 diagnostic module not found. Diagnostic features will be disabled.")
+
 # ── Initialize the Anthropic client (reads ANTHROPIC_API_KEY from environment) ──
 client = Anthropic()
 
@@ -421,12 +430,23 @@ def run_analysis(path: str) -> dict:
             defense_data = analyze_defense_mechanisms(conversation_text, participant_label)
             kpi_data     = analyze_kpis(conversation_text, participant_label)
             summary_data = qualitative_summary(conversation_text, participant_label)
+            
+            # Run DSM-5 diagnostic assessment if available
+            dsm5_data = None
+            if DSM5_AVAILABLE:
+                try:
+                    print(f"  Running DSM-5 diagnostic assessment...")
+                    dsm5_data = analyze_dsm5_diagnosis(conversation_text, participant_label)
+                except Exception as dsm_error:
+                    print(f"  ⚠ DSM-5 analysis failed: {dsm_error}")
+                    dsm5_data = {"error": str(dsm_error)}
 
             results["conversations"][participant_label] = {
                 "message_count":       len(messages),
                 "defense_mechanisms":  defense_data,
                 "kpis":                kpi_data,
-                "qualitative_summary": summary_data
+                "qualitative_summary": summary_data,
+                "dsm5_diagnosis":      dsm5_data  # Add DSM-5 diagnosis
             }
             print(f"  ✓ Done\n")
 
@@ -504,12 +524,21 @@ def run_demo() -> dict:
             defense_data = analyze_defense_mechanisms(conversation_text, participant_label)
             kpi_data     = analyze_kpis(conversation_text, participant_label)
             summary_data = qualitative_summary(conversation_text, participant_label)
+            
+            # Run DSM-5 diagnostic assessment if available
+            dsm5_data = None
+            if DSM5_AVAILABLE:
+                try:
+                    dsm5_data = analyze_dsm5_diagnosis(conversation_text, participant_label)
+                except Exception as dsm_error:
+                    dsm5_data = {"error": str(dsm_error)}
 
             results["conversations"][participant_label] = {
                 "message_count":       len(messages),
                 "defense_mechanisms":  defense_data,
                 "kpis":                kpi_data,
-                "qualitative_summary": summary_data
+                "qualitative_summary": summary_data,
+                "dsm5_diagnosis":      dsm5_data
             }
             print(f"  ✓ Done\n")
 
