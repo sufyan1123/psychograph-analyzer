@@ -21,7 +21,7 @@ from anthropic import Anthropic
 
 # ── Import DSM-5 diagnostic module ──────────────────────────────────────────
 try:
-    from dsm5_diagnostic import analyze_dsm5_diagnosis
+    from dsm5_diagnostic_ai import get_dsm5_diagnosis_ai as analyze_dsm5_diagnosis
     DSM5_AVAILABLE = True
     print("✓ DSM-5 diagnostic module loaded")
 except ImportError:

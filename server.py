@@ -38,7 +38,7 @@ from analyzer import (
 
 # Import DSM-5 diagnostic function if available
 if DSM5_AVAILABLE:
-    from dsm5_diagnostic import analyze_dsm5_diagnosis
+    from dsm5_diagnostic_ai import get_dsm5_diagnosis_ai as analyze_dsm5_diagnosis
 
 
 # ════════════════════════════════════════════════════════════════
